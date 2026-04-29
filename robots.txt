@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://dharunashokkumar.github.io/indian-listed-company-logos/sitemap.xml

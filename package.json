@@ -1,0 +1,11 @@
+{
+  "name": "indian-listed-company-logos",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Searchable NSE and BSE listed company logo directory for GitHub Pages.",
+  "scripts": {
+    "build:data": "node tools/build-data.mjs",
+    "serve": "python3 -m http.server 4173",
+    "validate": "node tools/validate-site.mjs"
+  }
+}

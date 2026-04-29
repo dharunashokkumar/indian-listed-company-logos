@@ -1,0 +1,16 @@
+{
+  "name": "Indian Listed Company Logos",
+  "short_name": "Listed Logos",
+  "description": "Search and download NSE and BSE listed company logos.",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f3efe7",
+  "theme_color": "#171512",
+  "icons": [
+    {
+      "src": "favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
