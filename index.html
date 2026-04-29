@@ -74,6 +74,81 @@
     </header>
 
     <main class="workspace">
+      <section class="api-room" aria-labelledby="apiTitle">
+        <div class="api-copy">
+          <p class="kicker">Free static logo API</p>
+          <h2 id="apiTitle">Ticker to logo URL</h2>
+          <p>
+            Direct SVG files are hosted from this GitHub Pages domain. Use the form to resolve a
+            symbol and copy an embed URL for your app.
+          </p>
+        </div>
+
+        <form id="apiForm" class="api-form">
+          <label>
+            Ticker
+            <input
+              id="apiTickerInput"
+              type="text"
+              autocomplete="off"
+              spellcheck="false"
+              placeholder="TCS"
+            />
+          </label>
+
+          <label>
+            Exchange
+            <select id="apiExchangeSelect">
+              <option value="auto">Auto</option>
+              <option value="NSE">NSE</option>
+              <option value="BSE">BSE</option>
+            </select>
+          </label>
+
+          <button id="apiResolveButton" type="submit">Get logo</button>
+        </form>
+
+        <div class="api-preview" aria-live="polite">
+          <div class="api-preview__stage">
+            <img id="apiLogoPreview" alt="" decoding="async" />
+          </div>
+          <div class="api-preview__copy">
+            <span id="apiMatchExchange" class="exchange">NSE</span>
+            <h3 id="apiMatchTicker">Ticker</h3>
+            <p id="apiMatchCompany">Enter a symbol to generate a public logo URL.</p>
+            <p id="apiMatchMeta">SVG endpoint</p>
+          </div>
+        </div>
+
+        <div class="api-outputs">
+          <label class="api-output">
+            SVG URL
+            <span>
+              <input id="apiSvgUrl" type="text" readonly value="" />
+              <button type="button" data-copy-target="apiSvgUrl">Copy</button>
+            </span>
+          </label>
+
+          <label class="api-output">
+            HTML
+            <span>
+              <input id="apiHtmlSnippet" type="text" readonly value="" />
+              <button type="button" data-copy-target="apiHtmlSnippet">Copy</button>
+            </span>
+          </label>
+
+          <label class="api-output api-output--wide">
+            Manifest JSON
+            <span>
+              <input id="apiManifestUrl" type="text" readonly value="" />
+              <button type="button" data-copy-target="apiManifestUrl">Copy</button>
+            </span>
+          </label>
+        </div>
+
+        <p id="apiStatus" class="api-status">Waiting for the logo index.</p>
+      </section>
+
       <section class="control-room" aria-label="Logo search and filters">
         <div class="search-block">
           <label class="search-label" for="searchInput">Search</label>
@@ -212,6 +287,7 @@
         </dl>
         <div class="card-actions">
           <button type="button" data-action="download">Download</button>
+          <button type="button" data-action="copy-url">Copy URL</button>
           <a target="_blank" rel="noreferrer">Open SVG</a>
         </div>
       </article>

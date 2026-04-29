@@ -53,7 +53,8 @@ select {
 
 button,
 select,
-input[type="search"] {
+input[type="search"],
+input[type="text"] {
   border: 1px solid var(--line);
   border-radius: 6px;
   color: var(--ink);
@@ -93,7 +94,8 @@ a {
 }
 
 select,
-input[type="search"] {
+input[type="search"],
+input[type="text"] {
   min-height: 42px;
   padding: 0 12px;
 }
@@ -234,6 +236,187 @@ h1 {
 
 .workspace {
   padding: 0 0 56px;
+}
+
+.api-room {
+  display: grid;
+  grid-template-columns: minmax(260px, 0.95fr) minmax(360px, 1.25fr);
+  gap: 18px;
+  align-items: stretch;
+  margin-top: 22px;
+  padding: clamp(16px, 2.4vw, 28px);
+  background: rgba(255, 250, 240, 0.92);
+  border: 1px solid var(--ink);
+  box-shadow: 8px 8px 0 var(--gold);
+}
+
+.api-room > *,
+.api-outputs,
+.api-output,
+.api-output span {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.api-copy {
+  min-width: 0;
+  padding-right: 10px;
+}
+
+.api-copy h2,
+.api-preview h3 {
+  margin: 0;
+  letter-spacing: 0;
+}
+
+.api-copy h2 {
+  max-width: min(520px, 100%);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(2rem, 4vw, 4.3rem);
+  font-weight: 900;
+  line-height: 0.92;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.api-copy p {
+  max-width: 520px;
+  margin: 16px 0 0;
+  color: var(--ink-soft);
+  font-size: 0.98rem;
+  line-height: 1.45;
+}
+
+.api-form {
+  display: grid;
+  grid-column: 2;
+  grid-template-columns: minmax(0, 1fr) minmax(120px, 160px) auto;
+  gap: 12px;
+  align-items: end;
+  min-width: 0;
+}
+
+.api-form label,
+.api-output,
+.api-status {
+  color: var(--ink-soft);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.72rem;
+  font-weight: 820;
+  text-transform: uppercase;
+}
+
+.api-form label,
+.api-output {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+}
+
+.api-form input,
+.api-form select {
+  width: 100%;
+}
+
+.api-preview {
+  display: grid;
+  grid-template-columns: 148px minmax(0, 1fr);
+  gap: 16px;
+  align-items: center;
+  min-width: 0;
+  padding: 14px;
+  background: var(--paper-bright);
+  border: 1px solid var(--ink);
+}
+
+.api-preview__stage {
+  display: grid;
+  place-items: center;
+  width: 148px;
+  aspect-ratio: 1;
+  padding: 14px;
+  overflow: hidden;
+  background:
+    linear-gradient(45deg, rgba(23, 21, 18, 0.045) 25%, transparent 25%) 0 0 / 16px 16px,
+    #fff;
+  border: 1px solid rgba(23, 21, 18, 0.2);
+}
+
+.api-preview__stage img {
+  display: block;
+  width: auto;
+  max-width: 100%;
+  height: auto;
+  max-height: 100%;
+}
+
+.api-preview__stage img:not([src]) {
+  display: none;
+}
+
+.api-preview__copy {
+  min-width: 0;
+}
+
+.api-preview .exchange {
+  display: inline-block;
+  margin-bottom: 9px;
+}
+
+.api-preview h3 {
+  font-size: clamp(1.4rem, 3vw, 2.3rem);
+  line-height: 1;
+  overflow-wrap: anywhere;
+}
+
+.api-preview p {
+  margin: 8px 0 0;
+  overflow-wrap: anywhere;
+}
+
+.api-preview p:first-of-type {
+  font-weight: 760;
+}
+
+.api-preview p:last-of-type {
+  color: var(--ink-soft);
+  font-size: 0.84rem;
+  word-break: break-all;
+}
+
+.api-outputs {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.api-output--wide {
+  grid-column: 1 / -1;
+}
+
+.api-output span {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+}
+
+.api-output input {
+  min-width: 0;
+  width: 100%;
+  color: var(--ink);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.78rem;
+  text-transform: none;
+}
+
+.api-output button:disabled {
+  cursor: not-allowed;
+}
+
+.api-status {
+  grid-column: 1 / -1;
+  margin: 0;
 }
 
 .control-room,
@@ -533,19 +716,27 @@ h1 {
 
 .card-actions {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 9px;
   align-items: center;
 }
 
+.card-actions button,
 .card-actions a {
   display: grid;
   min-height: 40px;
   place-items: center;
-  padding: 0 10px;
-  font-size: 0.82rem;
+  min-width: 0;
+  padding: 0 8px;
+  font-size: 0.78rem;
   font-weight: 760;
+  line-height: 1.05;
+  text-align: center;
   text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+.card-actions a {
   border: 1px solid var(--ink);
   border-radius: 6px;
 }
@@ -594,9 +785,15 @@ h1 {
 
 @media (max-width: 980px) {
   .masthead,
+  .api-room,
   .control-room,
   .download-room {
     grid-template-columns: 1fr;
+  }
+
+  .api-form,
+  .api-preview {
+    grid-column: auto;
   }
 
   .masthead__copy {
@@ -637,6 +834,40 @@ h1 {
 
   .download-room {
     gap: 12px;
+  }
+
+  .api-form,
+  .api-outputs {
+    grid-template-columns: 1fr;
+  }
+
+  .api-copy,
+  .api-form,
+  .api-preview,
+  .api-outputs {
+    width: min(100%, calc(100vw - 72px));
+  }
+
+  .api-copy h2,
+  .api-copy p {
+    max-width: calc(100vw - 72px);
+  }
+
+  .api-copy h2 {
+    font-size: clamp(1.75rem, 7vw, 2.2rem);
+    line-height: 0.98;
+  }
+
+  .api-output--wide {
+    grid-column: auto;
+  }
+
+  .api-preview {
+    grid-template-columns: 112px minmax(0, 1fr);
+  }
+
+  .api-preview__stage {
+    width: 112px;
   }
 
   .download-room > button {

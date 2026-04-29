@@ -13,6 +13,41 @@ Live page target: <https://dharunashokkumar.github.io/indian-listed-company-logo
 - Filter by exchange, sector, and index membership
 - Sort by relevance, market cap, ticker, company, or sector
 - Download one logo or bulk ZIP files as SVG, PNG, or JPG
+- Static API builder for copy-ready logo URLs and embed snippets
+
+## Use As A Static Logo API
+
+GitHub Pages cannot run a dynamic `/logo?ticker=TCS` backend, so the public API is static and cache-friendly.
+
+Direct SVG URL pattern:
+
+```text
+https://dharunashokkumar.github.io/indian-listed-company-logos/nse/NSE_TCS.svg
+https://dharunashokkumar.github.io/indian-listed-company-logos/bse/BSE_TCS.svg
+```
+
+When you know the exchange and ticker, use the direct SVG URL in an app:
+
+```html
+<img
+  src="https://dharunashokkumar.github.io/indian-listed-company-logos/nse/NSE_TCS.svg"
+  alt="TCS logo"
+  loading="lazy"
+/>
+```
+
+When you only know the ticker, fetch the manifest and resolve the logo file:
+
+```js
+const BASE = "https://dharunashokkumar.github.io/indian-listed-company-logos/";
+const ticker = "TCS";
+
+const data = await fetch(`${BASE}data/logos.json`).then((response) => response.json());
+const logo = data.logos.find((item) => item.exchange === "NSE" && item.ticker === ticker);
+const logoUrl = logo ? new URL(logo.file, BASE).href : null;
+```
+
+The homepage form can also generate the direct SVG URL, HTML snippet, and manifest URL for any available ticker.
 
 ## Analytics
 

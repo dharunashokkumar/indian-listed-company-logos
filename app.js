@@ -27,6 +27,19 @@
     loadMore: document.querySelector("#loadMore"),
     toast: document.querySelector("#toast"),
     template: document.querySelector("#logoCardTemplate"),
+    apiForm: document.querySelector("#apiForm"),
+    apiTickerInput: document.querySelector("#apiTickerInput"),
+    apiExchangeSelect: document.querySelector("#apiExchangeSelect"),
+    apiLogoPreview: document.querySelector("#apiLogoPreview"),
+    apiMatchExchange: document.querySelector("#apiMatchExchange"),
+    apiMatchTicker: document.querySelector("#apiMatchTicker"),
+    apiMatchCompany: document.querySelector("#apiMatchCompany"),
+    apiMatchMeta: document.querySelector("#apiMatchMeta"),
+    apiSvgUrl: document.querySelector("#apiSvgUrl"),
+    apiHtmlSnippet: document.querySelector("#apiHtmlSnippet"),
+    apiManifestUrl: document.querySelector("#apiManifestUrl"),
+    apiStatus: document.querySelector("#apiStatus"),
+    apiCopyButtons: document.querySelectorAll("[data-copy-target]"),
   };
 
   const collator = new Intl.Collator("en", { numeric: true, sensitivity: "base" });
@@ -48,6 +61,8 @@
     format: "svg",
     scale: 2,
     quality: 0.92,
+    apiTicker: "",
+    apiExchange: "auto",
     busy: false,
   };
 
@@ -67,9 +82,14 @@
       hydrateCounts(data.counts);
       hydrateFilters(data);
       syncControls();
+      syncApiControls();
+      resolveApiLogo();
       applyFilters("load");
     } catch (error) {
       console.error(error);
+      if (els.apiStatus) {
+        els.apiStatus.textContent = "The logo index could not be loaded.";
+      }
       showEmpty("The logo index could not be loaded.");
     }
   }
@@ -143,6 +163,33 @@
     els.downloadResults.addEventListener("click", () => {
       downloadBatch(state.filtered, "results");
     });
+
+    if (els.apiForm) {
+      const debouncedApiPreview = debounce(() => resolveApiLogo(), 160);
+
+      els.apiForm.addEventListener("submit", (event) => {
+        event.preventDefault();
+        state.apiTicker = els.apiTickerInput.value.trim();
+        state.apiExchange = els.apiExchangeSelect.value;
+        resolveApiLogo({ syncSearch: true, updateAddress: true });
+      });
+
+      els.apiTickerInput.addEventListener("input", () => {
+        state.apiTicker = els.apiTickerInput.value.trim();
+        debouncedApiPreview();
+      });
+
+      els.apiExchangeSelect.addEventListener("change", () => {
+        state.apiExchange = els.apiExchangeSelect.value;
+        resolveApiLogo();
+      });
+
+      els.apiCopyButtons.forEach((button) => {
+        button.addEventListener("click", () => {
+          copyTarget(button.dataset.copyTarget);
+        });
+      });
+    }
   }
 
   function readUrlState() {
@@ -152,6 +199,19 @@
     state.sector = params.get("sector") || "all";
     state.index = params.get("index") || "all";
     state.sort = params.get("sort") || "relevance";
+    state.apiTicker = params.get("ticker") || params.get("symbol") || "";
+
+    const parsedApi = parseTickerInput(state.apiTicker);
+    const apiExchange = (params.get("apiExchange") || params.get("market") || "").toUpperCase();
+    if (apiExchange === "NSE" || apiExchange === "BSE") {
+      state.apiExchange = apiExchange;
+    }
+    if (parsedApi.exchange) {
+      state.apiExchange = parsedApi.exchange;
+    }
+    if (!state.search && parsedApi.ticker) {
+      state.search = parsedApi.ticker;
+    }
   }
 
   function syncControls() {
@@ -164,6 +224,15 @@
     els.qualityInput.value = String(Math.round(state.quality * 100));
     els.qualityValue.textContent = els.qualityInput.value;
     document.querySelector(`input[name='format'][value='${state.format}']`).checked = true;
+  }
+
+  function syncApiControls() {
+    if (!els.apiForm) return;
+    const parsedApi = parseTickerInput(state.apiTicker);
+    els.apiTickerInput.value = parsedApi.ticker || state.apiTicker;
+    els.apiExchangeSelect.value = state.apiExchange;
+    els.apiManifestUrl.value = absoluteUrl(DATA_URL);
+    refreshApiCopyButtons();
   }
 
   function hydrateCounts(counts) {
@@ -206,6 +275,102 @@
       searchText: normalize(searchParts.filter(Boolean).join(" ")),
       marketCapValue: Number(logo.marketCap || 0),
     };
+  }
+
+  function resolveApiLogo(options = {}) {
+    if (!els.apiForm) return;
+
+    const { syncSearch = false, updateAddress = false } = options;
+    const parsed = parseTickerInput(state.apiTicker);
+    const exchange = parsed.exchange || state.apiExchange;
+
+    if (parsed.exchange) {
+      state.apiExchange = parsed.exchange;
+      els.apiExchangeSelect.value = parsed.exchange;
+    }
+
+    els.apiManifestUrl.value = absoluteUrl(DATA_URL);
+
+    if (!parsed.ticker) {
+      renderApiPlaceholder("Enter a symbol to generate a public logo URL.", "Waiting for a ticker.");
+      if (updateAddress) updateUrl();
+      return;
+    }
+
+    const logo = findLogoByTicker(parsed.ticker, exchange);
+    if (!logo) {
+      renderApiPlaceholder(
+        `No logo found for ${parsed.ticker}${exchange !== "auto" ? ` on ${exchange}` : ""}.`,
+        "No matching SVG endpoint.",
+      );
+      if (syncSearch) {
+        state.search = parsed.ticker;
+        state.exchange = exchange === "auto" ? "all" : exchange;
+        state.visible = PAGE_SIZE;
+        syncControls();
+        applyFilters("api_lookup");
+      } else if (updateAddress) {
+        updateUrl();
+      }
+      return;
+    }
+
+    renderApiMatch(logo);
+
+    if (syncSearch) {
+      state.search = logo.ticker;
+      state.exchange = exchange === "auto" ? "all" : logo.exchange;
+      state.visible = PAGE_SIZE;
+      syncControls();
+      applyFilters("api_lookup");
+    } else if (updateAddress) {
+      updateUrl();
+    }
+  }
+
+  function renderApiMatch(logo) {
+    const svgUrl = absoluteUrl(logo.file);
+    const company = logo.company || logo.ticker;
+
+    els.apiLogoPreview.src = logo.file;
+    els.apiLogoPreview.alt = `${company} logo`;
+    els.apiMatchExchange.textContent = logo.exchange;
+    els.apiMatchTicker.textContent = logo.ticker;
+    els.apiMatchCompany.textContent = company;
+    els.apiMatchMeta.textContent = `${logo.sector || "Listed company"} - ${logo.file}`;
+    els.apiSvgUrl.value = svgUrl;
+    els.apiHtmlSnippet.value = `<img src="${svgUrl}" alt="${escapeAttribute(company)} logo" loading="lazy">`;
+    els.apiManifestUrl.value = absoluteUrl(DATA_URL);
+    els.apiStatus.textContent = `Ready: ${logo.id}`;
+    refreshApiCopyButtons();
+  }
+
+  function renderApiPlaceholder(message, status) {
+    els.apiLogoPreview.removeAttribute("src");
+    els.apiLogoPreview.alt = "";
+    els.apiMatchExchange.textContent = "API";
+    els.apiMatchTicker.textContent = "Ticker";
+    els.apiMatchCompany.textContent = message;
+    els.apiMatchMeta.textContent = "SVG endpoint";
+    els.apiSvgUrl.value = "";
+    els.apiHtmlSnippet.value = "";
+    els.apiManifestUrl.value = absoluteUrl(DATA_URL);
+    els.apiStatus.textContent = status;
+    refreshApiCopyButtons();
+  }
+
+  function findLogoByTicker(ticker, exchange) {
+    const normalizedTicker = normalizeTicker(ticker);
+    const candidates = state.logos.filter((logo) => {
+      if (normalizeTicker(logo.ticker) !== normalizedTicker) return false;
+      return exchange === "auto" || logo.exchange === exchange;
+    });
+
+    return candidates.sort((a, b) => {
+      if (a.exchange === "NSE" && b.exchange !== "NSE") return -1;
+      if (b.exchange === "NSE" && a.exchange !== "NSE") return 1;
+      return b.marketCapValue - a.marketCapValue || collator.compare(a.ticker, b.ticker);
+    })[0] || null;
   }
 
   function applyFilters(reason) {
@@ -335,6 +500,9 @@
     svgLink.download = fileNameFor(logo, "svg");
 
     card.querySelector("[data-action='download']").addEventListener("click", () => downloadLogo(logo));
+    card.querySelector("[data-action='copy-url']").addEventListener("click", () => {
+      copyText(absoluteUrl(logo.file), `${logo.ticker} URL copied`);
+    });
 
     return card;
   }
@@ -529,6 +697,11 @@
     if (state.sector !== "all") params.set("sector", state.sector);
     if (state.index !== "all") params.set("index", state.index);
     if (state.sort !== "relevance") params.set("sort", state.sort);
+    if (state.apiTicker) {
+      const parsedApi = parseTickerInput(state.apiTicker);
+      params.set("ticker", parsedApi.ticker || state.apiTicker);
+    }
+    if (state.apiExchange !== "auto") params.set("apiExchange", state.apiExchange);
 
     const nextUrl = params.toString()
       ? `${window.location.pathname}?${params.toString()}`
@@ -549,6 +722,93 @@
     els.toast.textContent = message;
     els.toast.classList.add("is-visible");
     toastTimer = window.setTimeout(() => els.toast.classList.remove("is-visible"), 2600);
+  }
+
+  function copyTarget(targetId) {
+    const target = document.getElementById(targetId);
+    if (!target) return;
+    const value = "value" in target ? target.value : target.textContent;
+    copyText(value, "Copied to clipboard");
+  }
+
+  async function copyText(value, successMessage) {
+    if (!value) return;
+
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(value);
+      } else {
+        fallbackCopy(value);
+      }
+      toast(successMessage);
+    } catch (error) {
+      console.error(error);
+      toast("Copy failed.");
+    }
+  }
+
+  function fallbackCopy(value) {
+    const textarea = document.createElement("textarea");
+    textarea.value = value;
+    textarea.setAttribute("readonly", "");
+    textarea.style.position = "fixed";
+    textarea.style.top = "-1000px";
+    textarea.style.left = "-1000px";
+    document.body.append(textarea);
+    textarea.select();
+    const copied = document.execCommand("copy");
+    textarea.remove();
+    if (!copied) throw new Error("Copy command failed");
+  }
+
+  function refreshApiCopyButtons() {
+    els.apiCopyButtons.forEach((button) => {
+      const target = document.getElementById(button.dataset.copyTarget);
+      const value = target && "value" in target ? target.value : target?.textContent;
+      button.disabled = !value;
+    });
+  }
+
+  function absoluteUrl(path) {
+    return new URL(path, window.location.href).href;
+  }
+
+  function escapeAttribute(value) {
+    return String(value || "")
+      .replace(/&/g, "&amp;")
+      .replace(/"/g, "&quot;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+  }
+
+  function parseTickerInput(value) {
+    let ticker = String(value || "").trim().toUpperCase();
+    let exchange = "";
+
+    if (!ticker) {
+      return { ticker: "", exchange: "" };
+    }
+
+    const exchangePrefix = ticker.match(/^(NSE|BSE)\s*[:/_-]\s*(.+)$/);
+    if (exchangePrefix) {
+      exchange = exchangePrefix[1];
+      ticker = exchangePrefix[2];
+    }
+
+    const yahooSuffix = ticker.match(/^(.+)\.(NS|BO)$/);
+    if (yahooSuffix) {
+      ticker = yahooSuffix[1];
+      exchange = yahooSuffix[2] === "NS" ? "NSE" : "BSE";
+    }
+
+    return {
+      ticker: ticker.replace(/\s+/g, ""),
+      exchange,
+    };
+  }
+
+  function normalizeTicker(value) {
+    return String(value || "").trim().toUpperCase();
   }
 
   function normalize(value) {
