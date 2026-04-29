@@ -388,16 +388,16 @@ h1 {
 
 .logo-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(244px, 1fr));
-  gap: 14px;
+  grid-template-columns: repeat(auto-fill, minmax(286px, 1fr));
+  gap: 18px;
 }
 
 .logo-card {
   position: relative;
   display: grid;
   grid-template-rows: auto auto 1fr auto auto;
-  min-height: 390px;
-  padding: 12px;
+  min-height: 450px;
+  padding: 14px;
   overflow: hidden;
   background: var(--paper-bright);
   border: 1px solid var(--ink);
@@ -438,9 +438,10 @@ h1 {
 .logo-stage {
   display: grid;
   place-items: center;
-  height: 132px;
-  margin-bottom: 16px;
-  padding: 18px;
+  height: clamp(188px, 17vw, 248px);
+  margin-bottom: 18px;
+  padding: clamp(14px, 2vw, 20px);
+  overflow: hidden;
   background:
     linear-gradient(45deg, rgba(23, 21, 18, 0.045) 25%, transparent 25%) 0 0 / 18px 18px,
     #fff;
@@ -450,8 +451,9 @@ h1 {
 .logo-stage img {
   display: block;
   width: auto;
+  height: min(100%, 208px);
   max-width: 100%;
-  max-height: 92px;
+  max-height: 100%;
   object-fit: contain;
 }
 
